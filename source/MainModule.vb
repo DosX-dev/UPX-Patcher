@@ -2,7 +2,7 @@
 Imports System.Text
 Imports Microsoft.VisualBasic.Logging
 
-Module Program
+Module Program ' Let's have fun!
     Public rnd As New Random()
 
     Public Sub Main()
