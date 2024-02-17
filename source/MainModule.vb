@@ -2,7 +2,7 @@
 Imports System.Text
 Imports Microsoft.VisualBasic.Logging
 
-Module Program ' Let's have fun!
+Module Program
     Public rnd As New Random()
 
     Public Sub Main()
@@ -21,29 +21,43 @@ Module Program ' Let's have fun!
 
         If args.Length = 1 Then
             Console.WriteLine("Usage: {0} <file_path>", AppDomain.CurrentDomain.FriendlyName)
-            Return
+            Environment.Exit(0)
         End If
 
         Dim fileName As String = args(1)
 
         If IO.File.Exists(fileName) Then
 
+
             Dim bytesReplacer As New Patcher
 
-            If Not bytesReplacer.isPatternPresent(fileName, {&H55, &H50, ' #0
-                                                             &H58, &H30}) Then
+            Try
 
-                If bytesReplacer.isPatternPresent(fileName, Encoding.ASCII.GetBytes("DOSX")) Then
-                    Console.WriteLine("This file already patched.")
-                Else
-                    Console.WriteLine("This file is not packed with UPX.")
+                Using fs As New FileStream(fileName, FileMode.Open, FileAccess.Read)
+                    If Not New BinaryReader(fs).ReadBytes(2).SequenceEqual(New Byte() {&H4D, &H5A}) Then
+                        Throw New Exception("It doesn't look like a valid Windows executable.")
+                    End If
+                End Using
+
+
+                If Not bytesReplacer.isPatternPresent(fileName, {&H55, &H50, ' #0
+                                                                 &H58, &H30}) Then
+
+                    If bytesReplacer.isPatternPresent(fileName, Encoding.ASCII.GetBytes("DOSX")) Then
+                        Throw New Exception("This file already patched.")
+                    Else
+                        Throw New Exception("This file is not packed with UPX.")
+                    End If
+
                 End If
+
+            Catch ex As Exception
+                Console.ForegroundColor = ConsoleColor.Red
+                Console.WriteLine(ex.Message)
+                Console.ResetColor()
                 Environment.Exit(1)
+            End Try
 
-            End If
-
-            Dim randomVersionId(6) As Byte
-            rnd.NextBytes(randomVersionId)
 
 
             Console.WriteLine("Sections confusing...")
@@ -61,6 +75,9 @@ Module Program ' Let's have fun!
                                                Encoding.ASCII.GetBytes("CODE"))
 
             Console.WriteLine("Version block confusing...")
+
+            Dim randomVersionId(6) As Byte
+            rnd.NextBytes(randomVersionId)
 
             bytesReplacer.PatchBytes(fileName,
                                             {

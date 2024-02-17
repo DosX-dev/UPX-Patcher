@@ -2,6 +2,11 @@
 
 Class Patcher
     Public Function PatchBytes(ByVal filePath As String, ByVal pattern As Byte(), ByVal replacement As Byte()) As Boolean
+
+        If Not File.Exists(filePath) Then
+            Return False
+        End If
+
         Dim matchFound As Boolean = False
 
         Using fileStream As New FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None)
@@ -35,26 +40,42 @@ Class Patcher
         Return matchFound
     End Function
 
-    Function isPatternPresent(fileName As String, pattern As Byte()) As Boolean
-        Using fs As New FileStream(fileName, FileMode.Open, FileAccess.Read)
-            Dim buffer(pattern.Length - 1) As Byte
+    Function isPatternPresent(filePath As String, pattern As Byte()) As Boolean
+        If Not File.Exists(filePath) Then
+            Return False
+        End If
+
+        If pattern Is Nothing OrElse pattern.Length = 0 Then
+            Return False
+        End If
+
+        Using fs As New FileStream(filePath, FileMode.Open, FileAccess.Read)
+            If fs.Length < pattern.Length Then
+                Return False
+            End If
+
+            Dim buffer(fs.Length - 1) As Byte
+
             Dim bytesRead As Integer = fs.Read(buffer, 0, buffer.Length)
 
             While bytesRead > 0
                 If bytesRead >= pattern.Length Then
                     For i As Integer = 0 To bytesRead - pattern.Length
                         Dim match As Boolean = True
+
                         For j As Integer = 0 To pattern.Length - 1
                             If buffer(i + j) <> pattern(j) Then
                                 match = False
                                 Exit For
                             End If
                         Next
+
                         If match Then
                             Return True
                         End If
                     Next
                 End If
+
                 Array.Copy(buffer, pattern.Length, buffer, 0, bytesRead - pattern.Length)
                 bytesRead = fs.Read(buffer, bytesRead - pattern.Length, pattern.Length)
             End While
@@ -62,5 +83,7 @@ Class Patcher
 
         Return False
     End Function
+
+
 
 End Class
