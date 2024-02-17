@@ -76,6 +76,14 @@ Module Program
 
             Console.WriteLine("Version block confusing...")
 
+            Dim randomVersionPrefix(3) As Byte
+            rnd.NextBytes(randomVersionPrefix)
+
+            bytesReplacer.PatchBytes(fileName,
+                                            {
+                                                &H33, &H2E, &H39 ' "3.9" ..
+                                            }, randomVersionPrefix)
+
             Dim randomVersionId(6) As Byte
             rnd.NextBytes(randomVersionId)
 
@@ -102,15 +110,6 @@ Module Program
                                                 &H0, ' version separator
                                                 &H55, &H50, &H58, ' "UPX"
                                                 &H21 ' "!"
-                                            }
-            )
-
-            bytesReplacer.PatchBytes(fileName,
-                                            {
-                                                &H33, &H2E, &H39 ' "3.9" ..
-                                            },
-                                            {
-                                                &H0, &H0, &H0 ' 00 00 00
                                             }
             )
 
