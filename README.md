@@ -6,8 +6,8 @@ Using:
 UPX-Patcher.exe "sample.exe"
 ```
 
->> Patched file in Detect It Easy
+> Patched file in [Detect It Easy](https://github.com/horsicq/Detect-It-Easy)
 ![](die.jpg)
 
->> Demonstration
+> Demonstration
 ![](cmd.jpg)
