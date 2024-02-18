@@ -87,7 +87,7 @@ Class Patcher
 
     Function FindStringOffset(ByVal fileName As String, ByVal searchString As String) As Long
         Dim offset As Long = -1
-        Dim searchBytes As Byte() = Encoding.UTF8.GetBytes(searchString)
+        Dim searchBytes As Byte() = Encoding.ASCII.GetBytes(searchString)
 
         Using fs As New FileStream(fileName, FileMode.Open, FileAccess.Read)
             Dim buffer(searchBytes.Length - 1) As Byte

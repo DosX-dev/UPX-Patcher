@@ -43,7 +43,7 @@ Module Program
                 If Not bytesReplacer.isPatternPresent(fileName, {&H55, &H50, ' #0
                                                                  &H58, &H30}) Then
 
-                    If bytesReplacer.isPatternPresent(fileName, Encoding.ASCII.GetBytes("DOSX")) Then
+                    If bytesReplacer.isPatternPresent(fileName, Encoding.ASCII.GetBytes("DosX")) Then
                         Throw New Exception("This file already patched.")
                     Else
                         Throw New Exception("This file is not packed with UPX.")
