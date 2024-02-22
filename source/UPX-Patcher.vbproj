@@ -87,6 +87,8 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Patcher.vb" />
+    <Compile Include="PE.LiteParser.vb" />
+    <Compile Include="StdOut.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

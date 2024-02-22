@@ -7,20 +7,20 @@ Module Program
 
     Public Sub Main()
         Console.ForegroundColor = ConsoleColor.DarkYellow
-        Console.Write(vbLf & " UPX-Patcher (")
+        StdOut.Write(vbLf & " UPX-Patcher (", False)
 
         Console.ForegroundColor = ConsoleColor.DarkCyan
-        Console.Write("https://github.com/DosX-dev/UPX-Patcher")
+        StdOut.Write("https://github.com/DosX-dev/UPX-Patcher", False)
 
         Console.ForegroundColor = ConsoleColor.DarkYellow
-        Console.WriteLine(")" & vbLf)
+        StdOut.Write(")" & vbLf, True)
 
         Console.ResetColor()
 
         Dim args = Environment.GetCommandLineArgs()
 
         If args.Length = 1 Then
-            Console.WriteLine("Usage: {0} <file_path>", AppDomain.CurrentDomain.FriendlyName)
+            StdOut.Write("Usage: " & AppDomain.CurrentDomain.FriendlyName & " <file_path>", True)
             Environment.Exit(0)
         End If
 
@@ -52,7 +52,7 @@ Module Program
                 End If
 
 
-                Console.WriteLine("Sections confusing...")
+                StdOut.Log("Sections confusing...")
 
                 bytesReplacer.PatchBytes(fileName, {&H55, &H50, ' #0
                                                     &H58, &H30,
@@ -69,7 +69,7 @@ Module Program
                                                     &H0},
                                                    Encoding.ASCII.GetBytes(".code"))
 
-                Console.WriteLine("Version block confusing...")
+                StdOut.Log("Version block confusing...")
 
 
                 Dim offset As Long = bytesReplacer.FindStringOffset(fileName, "UPX!") ' version identifier
@@ -104,31 +104,68 @@ Module Program
                 ''''''''''''''''''''''''''''''''''''''''''''''''
 
 
-                Console.WriteLine("Adding fake version block...")
+                '  StdOut.Log("Adding fake version block...")
+                '
+                '
+                '  bytesReplacer.PatchBytes(fileName,
+                '                                  {
+                '                                      &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, ' padding
+                '                                      &H0, &H0, &H0, &H0, ' 00 00 00 00 -> "DosX"
+                '                                      &H0, ' version separator
+                '                                      &H0, &H0, &H0, ' 00 00 00 -> "UPX"
+                '                                      &H0, ' 00 -> "!"
+                '                                      &H0 ' padding
+                '                                  }, {
+                '                                      &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, ' padding
+                '                                      &H44, &H6F, &H73, &H58, ' "DosX"
+                '                                      &H0, ' version separator
+                '                                      &H55, &H50, &H58, ' "UPX"
+                '                                      &H21, ' "!"
+                '                                      &H0 ' padding
+                '                                  }
+                '  )
 
-
-                bytesReplacer.PatchBytes(fileName,
-                                                {
-                                                    &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, ' padding
-                                                    &H0, &H0, &H0, &H0, ' 00 00 00 00 -> "DosX"
-                                                    &H0, ' version separator
-                                                    &H0, &H0, &H0, ' 00 00 00 -> "UPX"
-                                                    &H0, ' 00 -> "!"
-                                                    &H0 ' padding
-                                                }, {
-                                                    &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, &H0, ' padding
-                                                    &H44, &H6F, &H73, &H58, ' "DosX"
-                                                    &H0, ' version separator
-                                                    &H55, &H50, &H58, ' "UPX"
-                                                    &H21, ' "!"
-                                                    &H0 ' padding
-                                                }
-                )
-
-                Console.WriteLine("Replacing standart DOS Stub message...")
+                StdOut.Log("Replacing standart DOS Stub message...")
 
                 bytesReplacer.PatchBytes(fileName, Encoding.ASCII.GetBytes("This program cannot be run in DOS mode."),
                                                    Encoding.ASCII.GetBytes("https://github.com/DosX-dev/UPX-Patcher"))
+
+                StdOut.Log("WinAPI changing...")
+
+                bytesReplacer.PatchBytes(fileName, Encoding.ASCII.GetBytes("ExitProcess"), ' function name size is 11 bytes
+                                                   Encoding.ASCII.GetBytes("CopyContext"))
+
+                StdOut.Log("EntryPoint patching...")
+
+                Dim isBuild64 As Boolean = PE.Is64(fileName)
+
+                If isBuild64 Then
+                    bytesReplacer.PatchBytes(fileName, ' x86_64
+                                                    {
+                                                        &H0, ' db 0
+                                                        &H53, ' pushal
+                                                        &H56 ' mov esi
+                                                    },
+                                                    {
+                                                        &H0, ' db 0
+                                                        &H55, ' push ebp
+                                                        &H56 ' mov esi
+                                                    }
+                                             )
+                Else
+                    bytesReplacer.PatchBytes(fileName, ' i386
+                                                    {
+                                                        &H0, ' db 0
+                                                        &H60, ' pushal
+                                                        &HBE ' mov esi
+                                                    },
+                                                    {
+                                                        &H0, ' db 0
+                                                        &H55, ' push ebp
+                                                        &HBE ' mov esi
+                                                    }
+                                             )
+                End If
 
             Catch ex As Exception
                 Console.ForegroundColor = ConsoleColor.Red
@@ -137,8 +174,7 @@ Module Program
                 Environment.Exit(1)
             End Try
 
-            Console.WriteLine("Done!")
+            StdOut.Log("Successfully patched!")
         End If
     End Sub
-
 End Module

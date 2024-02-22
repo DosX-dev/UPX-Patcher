@@ -41,7 +41,7 @@ Class Patcher
         Return matchFound
     End Function
 
-    Function isPatternPresent(filePath As String, pattern As Byte()) As Boolean
+    Function IsPatternPresent(filePath As String, pattern As Byte()) As Boolean
         If Not File.Exists(filePath) Then
             Return False
         End If
@@ -121,5 +121,51 @@ Class Patcher
             fs.Write(replacementBytes, 0, replacementBytes.Length)
         End Using
     End Sub
+
+
+    Public Function IndexOf(ByVal fileName As String, ByVal pattern() As Byte) As Integer
+        Dim fileStream As FileStream = Nothing
+        Try
+            fileStream = New FileStream(fileName, FileMode.Open, FileAccess.Read)
+
+            If pattern.Length > fileStream.Length Then Return -1
+
+            For Arr As Integer = 0 To fileStream.Length - pattern.Length - 1
+                Dim found As Boolean = True
+                For Searcher As Integer = 0 To (pattern.Length - 1)
+                    If fileStream.ReadByte() <> pattern(Searcher) Then
+                        found = False
+                        Exit For
+                    End If
+                Next
+                If found Then
+                    Return Arr
+                Else
+                    fileStream.Seek(Arr + 1, SeekOrigin.Begin)
+                End If
+            Next
+
+        Finally
+            If fileStream IsNot Nothing Then
+                fileStream.Close()
+            End If
+        End Try
+        Return -1
+    End Function
+
+    Public Function GetByte(ByVal fileName As String, ByVal index As Integer) As Byte
+        Dim fileStream As FileStream = Nothing
+        Try
+            fileStream = New FileStream(fileName, FileMode.Open, FileAccess.Read)
+            fileStream.Seek(index, SeekOrigin.Begin)
+
+            Return CByte(fileStream.ReadByte())
+
+        Finally
+            If fileStream IsNot Nothing Then
+                fileStream.Close()
+            End If
+        End Try
+    End Function
 
 End Class
