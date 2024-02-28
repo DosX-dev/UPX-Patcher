@@ -1,4 +1,4 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Text
 
 Class Patcher
@@ -90,24 +90,29 @@ Class Patcher
         Dim searchBytes As Byte() = Encoding.ASCII.GetBytes(searchString)
 
         Using fs As New FileStream(fileName, FileMode.Open, FileAccess.Read)
-            Dim buffer(searchBytes.Length - 1) As Byte
-            Dim bytesRead As Integer = fs.Read(buffer, 0, buffer.Length)
-            While bytesRead > 0
-                For i As Integer = 0 To bytesRead - searchBytes.Length
-                    Dim match As Boolean = True
-                    For j As Integer = 0 To searchBytes.Length - 1
-                        If buffer(i + j) <> searchBytes(j) Then
-                            match = False
-                            Exit For
+            Dim buffer(123456) As Byte,
+                bytesRead As Integer,
+                bufferOffset As Long = 0
+
+            Do
+                bytesRead = fs.Read(buffer, 0, buffer.Length)
+                If bytesRead > 0 Then
+                    For i As Integer = 0 To bytesRead - searchBytes.Length
+                        Dim match As Boolean = True
+                        For j As Integer = 0 To searchBytes.Length - 1
+                            If buffer(i + j) <> searchBytes(j) Then
+                                match = False
+                                Exit For
+                            End If
+                        Next
+                        If match Then
+                            offset = bufferOffset + i
+                            Return offset
                         End If
                     Next
-                    If match Then
-                        offset = fs.Position - bytesRead + i
-                        Return offset
-                    End If
-                Next
-                bytesRead = fs.Read(buffer, 0, buffer.Length)
-            End While
+                    bufferOffset += bytesRead
+                End If
+            Loop While bytesRead > 0
         End Using
 
         Return offset
